@@ -1,209 +1,279 @@
-import { useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { fetchInspirationList, type InspirationCard } from './api/inspiration';
 
-const tabs = ['推荐', '摄影', '插画', '二次元', '国风', '3D', '电商', '海报'];
-const secondaryTags = ['全部', '写实人像', '动漫', '场景设计', '产品渲染', '古风', '科技风'];
+interface NavItem {
+  key: string;
+  label: string;
+}
 
-const mockCards: InspirationCard[] = [
-  {
-    id: '1',
-    title: '赛博城市夜雨巡航',
-    image:
-      'https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=900&q=80',
-    width: 900,
-    height: 1200,
-    likes: 1260,
-    views: 5320,
-    tags: ['摄影', '赛博朋克'],
-    prompt: 'cyberpunk city, rainy night, cinematic, neon reflection',
-    author: {
-      id: 'u1',
-      name: '灵感创作者',
-      avatar: 'https://i.pravatar.cc/80?img=31'
-    }
-  },
-  {
-    id: '2',
-    title: '国风神女',
-    image: 'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=900&q=80',
-    width: 900,
-    height: 1320,
-    likes: 980,
-    views: 4112,
-    tags: ['插画', '国风'],
-    prompt: 'chinese style goddess, cloud and mist, delicate face, dramatic light',
-    author: {
-      id: 'u2',
-      name: '画布行者',
-      avatar: 'https://i.pravatar.cc/80?img=47'
-    }
-  },
-  {
-    id: '3',
-    title: '未来汽车棚拍',
-    image: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1200&q=80',
-    width: 1200,
-    height: 800,
-    likes: 742,
-    views: 2980,
-    tags: ['电商', '产品'],
-    prompt: 'studio lighting, electric car, clean background, high gloss details',
-    author: {
-      id: 'u3',
-      name: '商业视觉组',
-      avatar: 'https://i.pravatar.cc/80?img=12'
-    }
-  },
-  {
-    id: '4',
-    title: '梦境花园少女',
-    image:
-      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80',
-    width: 900,
-    height: 1100,
-    likes: 1530,
-    views: 6220,
-    tags: ['二次元', '梦幻'],
-    prompt: 'anime girl in fantasy flower garden, soft pastel, bloom, volumetric light',
-    author: {
-      id: 'u4',
-      name: '云野',
-      avatar: 'https://i.pravatar.cc/80?img=16'
-    }
-  },
-  {
-    id: '5',
-    title: '珠宝海报特写',
-    image:
-      'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=900&q=80',
-    width: 900,
-    height: 1000,
-    likes: 602,
-    views: 2400,
-    tags: ['海报', '产品渲染'],
-    prompt: 'luxury jewelry ad, macro lens, dramatic rim light, black background',
-    author: {
-      id: 'u5',
-      name: '清芒',
-      avatar: 'https://i.pravatar.cc/80?img=19'
-    }
-  },
-  {
-    id: '6',
-    title: '科幻机械天使',
-    image:
-      'https://images.unsplash.com/photo-1518779578993-ec3579fee39f?auto=format&fit=crop&w=900&q=80',
-    width: 900,
-    height: 1180,
-    likes: 1102,
-    views: 5012,
-    tags: ['3D', '科技风'],
-    prompt: 'futuristic mech angel, hard surface, dramatic pose, octane render',
-    author: {
-      id: 'u6',
-      name: '灰烬工作室',
-      avatar: 'https://i.pravatar.cc/80?img=6'
-    }
-  }
+interface CategoryItem {
+  key: string;
+  label: string;
+}
+
+interface TagItem {
+  key: string;
+  label: string;
+}
+
+const navItems: NavItem[] = [
+  { key: 'home', label: '首页' },
+  { key: 'inspiration', label: '灵感' },
+  { key: 'model', label: '模型广场' },
+  { key: 'workflow', label: '工作流' },
+  { key: 'course', label: '教程中心' }
+];
+
+const categories: CategoryItem[] = [
+  { key: 'all', label: '推荐' },
+  { key: '摄影', label: '摄影' },
+  { key: '插画', label: '插画' },
+  { key: '古风', label: '古风' },
+  { key: '3D', label: '3D' },
+  { key: '电商', label: '电商' },
+  { key: '场景', label: '场景' }
+];
+
+const tags: TagItem[] = [
+  { key: '', label: '全部' },
+  { key: '写实', label: '写实人像' },
+  { key: '梦幻', label: '梦幻插画' },
+  { key: '科技', label: '科技视觉' },
+  { key: '海报', label: '海报设计' },
+  { key: '人物', label: '人物特写' },
+  { key: '街拍', label: '街头摄影' },
+  { key: '家居', label: '空间家居' }
 ];
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('推荐');
-  const [activeTag, setActiveTag] = useState('全部');
-  const [keyword, setKeyword] = useState('');
-  const [cards, setCards] = useState<InspirationCard[]>(mockCards);
+  const [activeNav, setActiveNav] = useState('inspiration');
+  const [activeCategory, setActiveCategory] = useState('all');
+  const [activeTag, setActiveTag] = useState('');
+  const [searchValue, setSearchValue] = useState('');
+  const [cards, setCards] = useState<InspirationCard[]>([]);
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(30);
+  const [total, setTotal] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchInspirationList({ page: 1, pageSize: 20, type: 'picture', keyword, tag: activeTag })
-      .then((res) => setCards(res.list))
-      .catch(() => {
-        setCards(mockCards);
-      });
-  }, [keyword, activeTag]);
+    const params = new URLSearchParams(window.location.search);
+    const typeParam = params.get('type');
+    const tagParam = params.get('tag');
+    const keywordParam = params.get('searchValue');
 
-  const filtered = useMemo(() => {
-    return cards.filter((item) => {
-      const tabPassed = activeTab === '推荐' || item.tags.includes(activeTab);
-      const tagPassed = activeTag === '全部' || item.tags.includes(activeTag);
-      const keywordPassed = !keyword || item.title.includes(keyword) || item.prompt.includes(keyword);
-      return tabPassed && tagPassed && keywordPassed;
-    });
-  }, [cards, activeTab, activeTag, keyword]);
+    if (typeParam && typeParam !== 'picture') {
+      params.set('type', 'picture');
+      window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
+    }
+
+    if (tagParam !== null) {
+      setActiveTag(tagParam);
+    }
+
+    if (keywordParam !== null) {
+      setSearchValue(keywordParam);
+    }
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    params.set('type', 'picture');
+    params.set('tag', activeTag);
+    params.set('searchValue', searchValue);
+    window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
+  }, [activeTag, searchValue]);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchInspirationList({
+      page,
+      pageSize,
+      type: 'picture',
+      category: activeCategory,
+      tag: activeTag,
+      searchValue
+    })
+      .then((response) => {
+        setCards((prev) => (page === 1 ? response.list : [...prev, ...response.list]));
+        setTotal(response.total);
+        setHasMore(response.hasMore);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [activeCategory, activeTag, searchValue, page, pageSize]);
+
+  const promptPreview = useMemo(() => {
+    const first = cards[0];
+    if (!first) {
+      return '暂无结果，请调整关键词后重试。';
+    }
+    return first.prompt;
+  }, [cards]);
+
+  const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setPage(1);
+  };
 
   return (
-    <div className="mh-page">
-      <header className="mh-header">
-        <div className="mh-logo">秒画</div>
-        <nav className="mh-nav">
-          <a>首页</a>
-          <a className="active">灵感</a>
-          <a>模型广场</a>
-          <a>工作流</a>
-        </nav>
-        <div className="mh-actions">
-          <button className="ghost">控制台</button>
-          <button className="primary">开始创作</button>
+    <div className="page">
+      <header className="top-header">
+        <div className="header-left">
+          <div className="logo">秒画</div>
+          <nav className="main-nav">
+            {navItems.map((item) => (
+              <button
+                type="button"
+                key={item.key}
+                className={item.key === activeNav ? 'nav-item active' : 'nav-item'}
+                onClick={() => setActiveNav(item.key)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        <div className="header-actions">
+          <button type="button" className="btn btn-ghost">
+            控制台
+          </button>
+          <button type="button" className="btn btn-primary">
+            开始创作
+          </button>
         </div>
       </header>
 
-      <section className="mh-banner">
-        <div>
-          <h1>秒画灵感 · 图片</h1>
-          <p>探索高质量 AI 作品，复用提示词，一键生成同款风格。</p>
-        </div>
-        <div className="mh-search">
-          <input
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            placeholder="输入关键词搜索，如：国风人像"
-          />
-          <button>搜索</button>
-        </div>
-      </section>
-
-      <section className="mh-filter-row">
-        <div className="mh-tabs">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              className={tab === activeTab ? 'active' : ''}
-              onClick={() => setActiveTab(tab)}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-        <div className="mh-tags">
-          {secondaryTags.map((tag) => (
-            <button
-              key={tag}
-              className={tag === activeTag ? 'active' : ''}
-              onClick={() => setActiveTag(tag)}
-            >
-              {tag}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <main className="mh-waterfall">
-        {filtered.map((item) => (
-          <article key={item.id} className="mh-card">
-            <img src={item.image} alt={item.title} loading="lazy" />
-            <div className="mh-card-body">
-              <h3>{item.title}</h3>
-              <p>{item.prompt}</p>
-              <div className="mh-card-footer">
-                <div className="author">
-                  <img src={item.author.avatar} alt={item.author.name} />
-                  <span>{item.author.name}</span>
-                </div>
-                <div className="metric">❤ {item.likes}</div>
-              </div>
+      <main className="content">
+        <section className="hero">
+          <div className="hero-content">
+            <h1>秒画灵感</h1>
+            <p>精选海量高质量 AI 图像作品，支持关键词检索与标签筛选，快速找到可复用创意。</p>
+            <div className="hero-meta">
+              <span>图片灵感 {total}+</span>
+              <span>每日更新</span>
+              <span>支持一键同款</span>
             </div>
-          </article>
-        ))}
+          </div>
+
+          <form className="search-box" onSubmit={handleSearchSubmit}>
+            <input
+              value={searchValue}
+              onChange={(event) => setSearchValue(event.target.value)}
+              placeholder="搜索灵感关键词，如：国风少女、赛博都市、商业海报"
+            />
+            <button type="submit">搜索</button>
+          </form>
+        </section>
+
+        <section className="toolbar">
+          <div className="category-row">
+            {categories.map((item) => (
+              <button
+                type="button"
+                key={item.key}
+                className={item.key === activeCategory ? 'chip active' : 'chip'}
+                onClick={() => {
+                  setActiveCategory(item.key);
+                  setPage(1);
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="tag-row">
+            {tags.map((item) => (
+              <button
+                type="button"
+                key={item.key || 'all'}
+                className={item.key === activeTag ? 'tag active' : 'tag'}
+                onClick={() => {
+                  setActiveTag(item.key);
+                  setPage(1);
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="prompt-bar">
+            <span className="prompt-label">推荐提示词</span>
+            <span className="prompt-content">{promptPreview}</span>
+          </div>
+        </section>
+
+        <section className="waterfall">
+          {loading && <div className="status">加载中...</div>}
+          {!loading && cards.length === 0 && <div className="status">没有找到匹配内容。</div>}
+
+          {cards.map((card) => (
+            <article key={card.id} className="card">
+              <div className="card-image-wrap" style={{ aspectRatio: `${card.width} / ${card.height}` }}>
+                <img src={card.image} alt={card.title} loading="lazy" />
+                <div className="card-overlay">
+                  <button type="button" className="overlay-btn">
+                    同款生成
+                  </button>
+                  <button type="button" className="overlay-btn ghost">
+                    收藏
+                  </button>
+                </div>
+              </div>
+
+              <div className="card-body">
+                <h3>{card.title}</h3>
+                <p>{card.description}</p>
+                <div className="card-tags">
+                  {card.tags.slice(1).map((tag) => (
+                    <span key={`${card.id}-${tag}`}>#{tag}</span>
+                  ))}
+                </div>
+              </div>
+
+              <footer className="card-footer">
+                <div className="author">
+                  <img src={card.author.avatar} alt={card.author.name} />
+                  <div>
+                    <strong>{card.author.name}</strong>
+                    {card.author.badge && <em>{card.author.badge}</em>}
+                  </div>
+                </div>
+
+                <div className="metrics">
+                  <span>❤ {card.likes.toLocaleString()}</span>
+                  <span>👁 {card.views.toLocaleString()}</span>
+                </div>
+              </footer>
+            </article>
+          ))}
+        </section>
       </main>
+
+      <footer className="footer">
+        <div>© 2026 秒画 Inspiration</div>
+        <div className="footer-links">
+          <a href="#">用户协议</a>
+          <a href="#">隐私政策</a>
+          <a href="#">联系支持</a>
+        </div>
+        <button
+          type="button"
+          className="more-btn"
+          onClick={() => {
+            if (hasMore) {
+              setPage((prev) => prev + 1);
+            }
+          }}
+        >
+          {hasMore ? '加载更多' : '没有更多内容'}
+        </button>
+      </footer>
     </div>
   );
 }
