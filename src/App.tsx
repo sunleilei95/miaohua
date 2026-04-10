@@ -213,10 +213,43 @@ export default function App() {
           {!loading && cards.length === 0 && <div className="status">没有找到匹配内容。</div>}
 
           {cards.map((card) => (
-            <article key={card.id} className="card card-only-image">
+            <article key={card.id} className="card">
               <div className="card-image-wrap" style={{ aspectRatio: `${card.width} / ${card.height}` }}>
                 <img src={card.image} alt={card.title} loading="lazy" />
+                <div className="card-overlay">
+                  <button type="button" className="overlay-btn">
+                    同款生成
+                  </button>
+                  <button type="button" className="overlay-btn ghost">
+                    收藏
+                  </button>
+                </div>
               </div>
+
+              <div className="card-body">
+                <h3>{card.title}</h3>
+                <p>{card.description}</p>
+                <div className="card-tags">
+                  {card.tags.slice(1).map((tag) => (
+                    <span key={`${card.id}-${tag}`}>#{tag}</span>
+                  ))}
+                </div>
+              </div>
+
+              <footer className="card-footer">
+                <div className="author">
+                  <img src={card.author.avatar} alt={card.author.name} />
+                  <div>
+                    <strong>{card.author.name}</strong>
+                    {card.author.badge && <em>{card.author.badge}</em>}
+                  </div>
+                </div>
+
+                <div className="metrics">
+                  <span>❤ {card.likes.toLocaleString()}</span>
+                  <span>👁 {card.views.toLocaleString()}</span>
+                </div>
+              </footer>
             </article>
           ))}
         </section>
