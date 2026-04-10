@@ -237,17 +237,16 @@ input {
 }
 
 .waterfall {
-  margin: 16px auto 0;
-  width: 100%;
-  max-width: 1520px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, 240px);
-  justify-content: center;
-  gap: 16px;
+  margin-top: 16px;
+  column-width: 240px;
+  column-gap: 16px;
 }
 
 .card {
-  width: 240px;
+  width: 100%;
+  display: inline-block;
+  break-inside: avoid;
+  margin: 8px 0;
   border: 1px solid rgb(255 255 255 / 10%);
   border-radius: 14px;
   overflow: hidden;
