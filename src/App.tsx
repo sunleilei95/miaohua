@@ -1,102 +1,208 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { fetchInspirationList, type InspirationCard } from './api/inspiration';
 
-type InspirationItem = {
-  id: number;
-  title: string;
-  prompt: string;
-  ratio: 'portrait' | 'square' | 'landscape';
-  category: '插画' | '摄影' | '二次元' | '3D' | '概念设计';
-};
+const tabs = ['推荐', '摄影', '插画', '二次元', '国风', '3D', '电商', '海报'];
+const secondaryTags = ['全部', '写实人像', '动漫', '场景设计', '产品渲染', '古风', '科技风'];
 
-const tabs: Array<InspirationItem['category'] | '全部'> = ['全部', '插画', '摄影', '二次元', '3D', '概念设计'];
-
-const inspirations: InspirationItem[] = [
-  { id: 1, title: '梦境森林精灵', prompt: 'cinematic light, fantasy forest, glowing particles', ratio: 'portrait', category: '插画' },
-  { id: 2, title: '未来城市夜景', prompt: 'cyberpunk skyline, neon, rainy street, ultra detailed', ratio: 'landscape', category: '概念设计' },
-  { id: 3, title: '花海中的少女', prompt: 'anime style, soft color, depth of field, 8k', ratio: 'portrait', category: '二次元' },
-  { id: 4, title: '机械鲨鱼', prompt: 'hard surface, metallic texture, dramatic angle', ratio: 'square', category: '3D' },
-  { id: 5, title: '雪山公路旅行', prompt: 'wide angle shot, mountain road, realistic photography', ratio: 'landscape', category: '摄影' },
-  { id: 6, title: '国风神兽', prompt: 'oriental ink style, mythical creature, cloud and mist', ratio: 'portrait', category: '插画' },
-  { id: 7, title: '玻璃材质角色', prompt: 'translucent material, subsurface scattering, octane render', ratio: 'portrait', category: '3D' },
-  { id: 8, title: '空中岛屿', prompt: 'matte painting, epic scale, volumetric clouds', ratio: 'landscape', category: '概念设计' },
-  { id: 9, title: '清晨咖啡馆', prompt: '35mm photo, warm light, lifestyle composition', ratio: 'square', category: '摄影' },
-  { id: 10, title: '星海少女', prompt: 'anime illustration, cosmic background, sparkling hair', ratio: 'portrait', category: '二次元' },
-  { id: 11, title: '远古遗迹', prompt: 'lost civilization, giant architecture, explorers', ratio: 'landscape', category: '概念设计' },
-  { id: 12, title: '荧光花束', prompt: 'macro photography, neon petals, dark background', ratio: 'square', category: '摄影' }
+const mockCards: InspirationCard[] = [
+  {
+    id: '1',
+    title: '赛博城市夜雨巡航',
+    image:
+      'https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=900&q=80',
+    width: 900,
+    height: 1200,
+    likes: 1260,
+    views: 5320,
+    tags: ['摄影', '赛博朋克'],
+    prompt: 'cyberpunk city, rainy night, cinematic, neon reflection',
+    author: {
+      id: 'u1',
+      name: '灵感创作者',
+      avatar: 'https://i.pravatar.cc/80?img=31'
+    }
+  },
+  {
+    id: '2',
+    title: '国风神女',
+    image: 'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=900&q=80',
+    width: 900,
+    height: 1320,
+    likes: 980,
+    views: 4112,
+    tags: ['插画', '国风'],
+    prompt: 'chinese style goddess, cloud and mist, delicate face, dramatic light',
+    author: {
+      id: 'u2',
+      name: '画布行者',
+      avatar: 'https://i.pravatar.cc/80?img=47'
+    }
+  },
+  {
+    id: '3',
+    title: '未来汽车棚拍',
+    image: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1200&q=80',
+    width: 1200,
+    height: 800,
+    likes: 742,
+    views: 2980,
+    tags: ['电商', '产品'],
+    prompt: 'studio lighting, electric car, clean background, high gloss details',
+    author: {
+      id: 'u3',
+      name: '商业视觉组',
+      avatar: 'https://i.pravatar.cc/80?img=12'
+    }
+  },
+  {
+    id: '4',
+    title: '梦境花园少女',
+    image:
+      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80',
+    width: 900,
+    height: 1100,
+    likes: 1530,
+    views: 6220,
+    tags: ['二次元', '梦幻'],
+    prompt: 'anime girl in fantasy flower garden, soft pastel, bloom, volumetric light',
+    author: {
+      id: 'u4',
+      name: '云野',
+      avatar: 'https://i.pravatar.cc/80?img=16'
+    }
+  },
+  {
+    id: '5',
+    title: '珠宝海报特写',
+    image:
+      'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=900&q=80',
+    width: 900,
+    height: 1000,
+    likes: 602,
+    views: 2400,
+    tags: ['海报', '产品渲染'],
+    prompt: 'luxury jewelry ad, macro lens, dramatic rim light, black background',
+    author: {
+      id: 'u5',
+      name: '清芒',
+      avatar: 'https://i.pravatar.cc/80?img=19'
+    }
+  },
+  {
+    id: '6',
+    title: '科幻机械天使',
+    image:
+      'https://images.unsplash.com/photo-1518779578993-ec3579fee39f?auto=format&fit=crop&w=900&q=80',
+    width: 900,
+    height: 1180,
+    likes: 1102,
+    views: 5012,
+    tags: ['3D', '科技风'],
+    prompt: 'futuristic mech angel, hard surface, dramatic pose, octane render',
+    author: {
+      id: 'u6',
+      name: '灰烬工作室',
+      avatar: 'https://i.pravatar.cc/80?img=6'
+    }
+  }
 ];
 
-const gradients: Record<number, string> = {
-  1: 'linear-gradient(160deg, #5f62ff 0%, #9f72ff 45%, #f69bd7 100%)',
-  2: 'linear-gradient(160deg, #10223f 0%, #174f90 48%, #5ea9ff 100%)',
-  3: 'linear-gradient(160deg, #ff7f97 0%, #ffd1dc 100%)',
-  4: 'linear-gradient(150deg, #29323c 0%, #485563 100%)',
-  5: 'linear-gradient(160deg, #4a6fa1 0%, #87b8f5 100%)',
-  6: 'linear-gradient(150deg, #c58a2d 0%, #f4d78f 100%)',
-  7: 'linear-gradient(150deg, #5f7fff 0%, #87ebff 100%)',
-  8: 'linear-gradient(150deg, #6f5bff 0%, #9fd0ff 100%)',
-  9: 'linear-gradient(150deg, #af6840 0%, #f5b88c 100%)',
-  10: 'linear-gradient(150deg, #7446f2 0%, #f478cb 100%)',
-  11: 'linear-gradient(150deg, #475742 0%, #9bbd82 100%)',
-  12: 'linear-gradient(150deg, #263b66 0%, #4fb6e6 100%)'
-};
-
 export default function App() {
-  const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>('全部');
+  const [activeTab, setActiveTab] = useState('推荐');
+  const [activeTag, setActiveTag] = useState('全部');
+  const [keyword, setKeyword] = useState('');
+  const [cards, setCards] = useState<InspirationCard[]>(mockCards);
 
-  const list = useMemo(() => {
-    if (activeTab === '全部') return inspirations;
-    return inspirations.filter((item) => item.category === activeTab);
-  }, [activeTab]);
+  useEffect(() => {
+    fetchInspirationList({ page: 1, pageSize: 20, type: 'picture', keyword, tag: activeTag })
+      .then((res) => setCards(res.list))
+      .catch(() => {
+        setCards(mockCards);
+      });
+  }, [keyword, activeTag]);
+
+  const filtered = useMemo(() => {
+    return cards.filter((item) => {
+      const tabPassed = activeTab === '推荐' || item.tags.includes(activeTab);
+      const tagPassed = activeTag === '全部' || item.tags.includes(activeTag);
+      const keywordPassed = !keyword || item.title.includes(keyword) || item.prompt.includes(keyword);
+      return tabPassed && tagPassed && keywordPassed;
+    });
+  }, [cards, activeTab, activeTag, keyword]);
 
   return (
-    <div className="page">
-      <header className="hero">
-        <div className="hero__mask" />
-        <nav className="topbar">
-          <h1>秒画 Inspiration</h1>
-          <button className="cta">立即创作</button>
+    <div className="mh-page">
+      <header className="mh-header">
+        <div className="mh-logo">秒画</div>
+        <nav className="mh-nav">
+          <a>首页</a>
+          <a className="active">灵感</a>
+          <a>模型广场</a>
+          <a>工作流</a>
         </nav>
-
-        <div className="hero__content">
-          <p className="hero__kicker">灵感广场</p>
-          <h2>海量高质量 AI 创作范例，
-            <br />
-            一键获取同款风格。</h2>
-          <div className="search">
-            <input placeholder="搜索提示词、风格或题材" />
-            <button>搜索</button>
-          </div>
+        <div className="mh-actions">
+          <button className="ghost">控制台</button>
+          <button className="primary">开始创作</button>
         </div>
       </header>
 
-      <main className="content">
-        <div className="tabs" role="tablist" aria-label="风格筛选">
+      <section className="mh-banner">
+        <div>
+          <h1>秒画灵感 · 图片</h1>
+          <p>探索高质量 AI 作品，复用提示词，一键生成同款风格。</p>
+        </div>
+        <div className="mh-search">
+          <input
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            placeholder="输入关键词搜索，如：国风人像"
+          />
+          <button>搜索</button>
+        </div>
+      </section>
+
+      <section className="mh-filter-row">
+        <div className="mh-tabs">
           {tabs.map((tab) => (
             <button
               key={tab}
-              role="tab"
-              aria-selected={activeTab === tab}
-              className={activeTab === tab ? 'tab active' : 'tab'}
+              className={tab === activeTab ? 'active' : ''}
               onClick={() => setActiveTab(tab)}
             >
               {tab}
             </button>
           ))}
         </div>
-
-        <section className="masonry" aria-live="polite">
-          {list.map((item) => (
-            <article key={item.id} className={`card card--${item.ratio}`}>
-              <div className="thumb" style={{ background: gradients[item.id] }}>
-                <span className="badge">{item.category}</span>
-              </div>
-              <div className="meta">
-                <h3>{item.title}</h3>
-                <p>{item.prompt}</p>
-              </div>
-            </article>
+        <div className="mh-tags">
+          {secondaryTags.map((tag) => (
+            <button
+              key={tag}
+              className={tag === activeTag ? 'active' : ''}
+              onClick={() => setActiveTag(tag)}
+            >
+              {tag}
+            </button>
           ))}
-        </section>
+        </div>
+      </section>
+
+      <main className="mh-waterfall">
+        {filtered.map((item) => (
+          <article key={item.id} className="mh-card">
+            <img src={item.image} alt={item.title} loading="lazy" />
+            <div className="mh-card-body">
+              <h3>{item.title}</h3>
+              <p>{item.prompt}</p>
+              <div className="mh-card-footer">
+                <div className="author">
+                  <img src={item.author.avatar} alt={item.author.name} />
+                  <span>{item.author.name}</span>
+                </div>
+                <div className="metric">❤ {item.likes}</div>
+              </div>
+            </div>
+          </article>
+        ))}
       </main>
     </div>
   );
