@@ -238,13 +238,15 @@ input {
 
 .waterfall {
   margin-top: 16px;
-  column-count: 5;
-  column-gap: 14px;
+  column-width: 240px;
+  column-gap: 16px;
 }
 
 .card {
+  width: 100%;
+  display: inline-block;
   break-inside: avoid;
-  margin-bottom: 14px;
+  margin: 8px 0;
   border: 1px solid rgb(255 255 255 / 10%);
   border-radius: 14px;
   overflow: hidden;
@@ -400,20 +402,10 @@ input {
   cursor: pointer;
 }
 
-@media (max-width: 1320px) {
-  .waterfall {
-    column-count: 4;
-  }
-}
-
 @media (max-width: 1120px) {
   .hero {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .waterfall {
-    column-count: 3;
   }
 
   .hero h1 {
@@ -435,9 +427,6 @@ input {
     align-items: flex-start;
   }
 
-  .waterfall {
-    column-count: 2;
-  }
 }
 
 @media (max-width: 580px) {
@@ -453,7 +442,4 @@ input {
     font-size: 28px;
   }
 
-  .waterfall {
-    column-count: 1;
-  }
 }
